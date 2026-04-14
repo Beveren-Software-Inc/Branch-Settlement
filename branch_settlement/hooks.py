@@ -257,5 +257,12 @@ fixtures = [
             ["doc_type", "=", "Journal Entry Account"],
             ["field_name", "=", "reference_type"],
         ],
-    }
+    },
+    {
+        "doctype": "Custom Field",
+        "filters": [
+            ["dt", "=", "Customer"],
+            ["fieldname","in",["custom_head_branch","custom_is_head_branch"]] 
+        ],
+    },
 ]
