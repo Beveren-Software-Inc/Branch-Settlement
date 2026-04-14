@@ -19,7 +19,28 @@ frappe.ui.form.on("Branch Settlement", {
         frm.set_value("received_amount", 0);
     },
 
-    // ── Get Outstanding Invoices Button ──────────────────────────────────────
+    received_amount: function (frm) {
+        let remaining_amount = frm.doc.received_amount || 0;
+
+        (frm.doc.payment_references || []).forEach(row => {
+            let outstanding = row.outstanding_amount || 0;
+
+            if (remaining_amount > 0) {
+                if (remaining_amount >= outstanding) {
+                    row.allocated_amount = outstanding;
+                    remaining_amount -= outstanding;
+                } else {
+                    row.allocated_amount = remaining_amount;
+                    remaining_amount = 0;
+                }
+            } else {
+                row.allocated_amount = 0;
+            }
+        });
+
+        frm.refresh_field("payment_references");
+    },
+
     get_outstanding_invoices: function (frm) {
         if (!frm.doc.head_branch) {
             frappe.msgprint(__("Please select a Head Branch first."));
@@ -34,7 +55,6 @@ frappe.ui.form.on("Branch Settlement", {
             return;
         }
 
-        // ── Same filter dialog as Payment Entry ──────────────────────────────
         const dialog = new frappe.ui.Dialog({
             title: __("Get Outstanding Invoices"),
             // fields: [
@@ -76,7 +96,6 @@ frappe.ui.form.on("Branch Settlement", {
             //     },
             // ],
             fields: [
-                // ── Posting Date ─────────────────────────────────────────────
                 {
                     fieldtype: "Section Break",
                     fieldname: "sec_posting_date",
@@ -98,7 +117,6 @@ frappe.ui.form.on("Branch Settlement", {
                     label: __("To Date"),
                     default: frm.doc.posting_date,
                 },
-                // ── Due Date ─────────────────────────────────────────────────
                 {
                     fieldtype: "Section Break",
                     fieldname: "sec_due_date",
@@ -118,7 +136,6 @@ frappe.ui.form.on("Branch Settlement", {
                     fieldname: "to_due_date",
                     label: __("To Date"),
                 },
-                // ── Outstanding Amount ────────────────────────────────────────
                 {
                     fieldtype: "Section Break",
                     fieldname: "sec_outstanding_amt",
@@ -198,7 +215,6 @@ frappe.ui.form.on("Branch Settlement", {
     },
 });
 
-// ── Child table: keep received_amount in sync ────────────────────────────────
 frappe.ui.form.on("Branch Settlement Reference", {
     allocated_amount: function (frm) {
         _sync_received_amount(frm);
